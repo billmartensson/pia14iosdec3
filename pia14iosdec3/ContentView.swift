@@ -6,35 +6,14 @@
 //
 
 import SwiftUI
-import Firebase
 
 struct ContentView: View {
     
-    func savefb() {
-        var ref: DatabaseReference!
-        ref = Database.database().reference()
-        
-        ref.child("fruit").setValue("apelsin")
-        
-    }
+    @State var shopcode = ShoppingCode()
     
-    func loadfb() async {
-        var ref: DatabaseReference!
-        ref = Database.database().reference()
+    @State var addname = ""
+    @State var addamount = ""
 
-        do {
-            let snapshot = try await ref.child("fruit").getData()
-            
-            let fruittext = snapshot.value as! String
-            
-            print(fruittext)
-            
-        } catch {
-            print("ERROR FEL!!")
-        }
-        
-    }
-    
     
     var body: some View {
         VStack {
@@ -43,18 +22,35 @@ struct ContentView: View {
                 .foregroundStyle(.tint)
             Text("Hello, world!")
             
-            Button("DO SAVE") {
-                savefb()
-            }
-
-            Button("DO LOAD") {
-                Task {
-                    await loadfb()
+            HStack {
+                TextField("Name", text: $addname)
+                TextField("Amount", text: $addamount)
+                
+                Button("ADD") {
+                    shopcode.addToShopping(newname: addname, newamount: addamount)
                 }
             }
-
+            
+            List(shopcode.shoppinglist, id: \.fbid) { item in
+                HStack {
+                    VStack {
+                        Text(item.shopname)
+                        Text("\(item.shopamount)")
+                    }
+                    
+                    Spacer()
+                    
+                    Button("DELETE") {
+                        shopcode.deleteShopping(deleteitem: item)
+                    }
+                }
+            }
+            
         }
         .padding()
+        .task {
+            await shopcode.loadShopping()
+        }
     }
 }
 
