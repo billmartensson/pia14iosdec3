@@ -51,7 +51,7 @@ struct ShopItem {
     }
     
     
-    func addToShopping(newname : String, newamount : String) {
+    func addToShopping(edititem : ShopItem?, newname : String, newamount : String) {
         guard let newamountint = Int(newamount) else { return }
         
         var ref = Database.database().reference()
@@ -60,11 +60,18 @@ struct ShopItem {
         
         shopsave["shopname"] = newname
         shopsave["shopamount"] = newamountint
-        shopsave["shopbought"] = false
-
+        if edititem == nil {
+            shopsave["shopbought"] = false
+        }
+        
         let userid = Auth.auth().currentUser!.uid
         
-        ref.child("shoppinglist").child(userid).childByAutoId().setValue(shopsave)
+        if edititem == nil {
+            ref.child("shoppinglist").child(userid).childByAutoId().setValue(shopsave)
+        } else {
+            ref.child("shoppinglist").child(userid).child(edititem!.fbid).updateChildValues(shopsave)
+        }
+        
         Task {
             await loadShopping()
         }
@@ -124,6 +131,20 @@ struct ShopItem {
         let userid = Auth.auth().currentUser!.uid
         
         ref.child("shoppinglist").child(userid).child(deleteitem.fbid).removeValue()
+        
+        Task {
+            await loadShopping()
+        }
+    }
+    
+    func switchbought(item : ShopItem) {
+        var ref = Database.database().reference()
+        
+        let userid = Auth.auth().currentUser!.uid
+        
+        let newbought = !item.shopbought
+
+        ref.child("shoppinglist").child(userid).child(item.fbid).child("shopbought").setValue(newbought)
         
         Task {
             await loadShopping()

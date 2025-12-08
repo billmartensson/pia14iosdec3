@@ -15,20 +15,28 @@ struct ContentView: View {
     @State var addname = ""
     @State var addamount = ""
 
+    @State var editshop : ShopItem?
+    
+    func doedit(item : ShopItem) {
+        addname = item.shopname
+        addamount = "\(item.shopamount)"
+        
+        editshop = item
+    }
     
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
             
             HStack {
                 TextField("Name", text: $addname)
                 TextField("Amount", text: $addamount)
                 
-                Button("ADD") {
-                    shopcode.addToShopping(newname: addname, newamount: addamount)
+                Button(editshop == nil ? "ADD" : "SAVE") {
+                    shopcode.addToShopping(edititem: editshop, newname: addname, newamount: addamount)
+                    
+                    editshop = nil
+                    addname = ""
+                    addamount = ""
                 }
             }
             
@@ -42,13 +50,22 @@ struct ContentView: View {
                     Spacer()
                     
                     Button(item.shopbought ? "KÖPT" : "EJ KÖPT") {
-                        
-                    }
-
-                    Button("DELETE") {
-                        shopcode.deleteShopping(deleteitem: item)
+                        shopcode.switchbought(item: item)
                     }
                 }
+                .swipeActions(edge: .trailing) {
+                    Button("Edit") {
+                        doedit(item: item)
+                    }
+                    .tint(Color.purple)
+
+                    Button("Delete") {
+                        shopcode.deleteShopping(deleteitem: item)
+                    }
+                    .tint(Color.red)
+
+                }
+                
             }
             
             Button("Logout") {

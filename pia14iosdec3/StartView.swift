@@ -10,7 +10,7 @@ import FirebaseAuth
 
 struct StartView: View {
     
-    @State var isLoggedin = false
+    @State var isLoggedin : Bool?
     
     func listenauth() {
         Auth.auth().addStateDidChangeListener { auth, user in
@@ -28,11 +28,13 @@ struct StartView: View {
     var body: some View {
         VStack {
             
-            if isLoggedin {
+            if isLoggedin == true {
                 ContentView()
-            } else {
+            }
+            if isLoggedin == false {
                 LoginView()
             }
+            
             
         }
         .onAppear() {
