@@ -27,7 +27,7 @@ struct pia14iosdec3App: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            StartView()
         }
     }
 }
