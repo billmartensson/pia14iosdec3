@@ -7,7 +7,7 @@
 
 import Foundation
 import Firebase
-
+import FirebaseAuth
 
 struct ShopItem {
     var fbid : String
@@ -62,8 +62,9 @@ struct ShopItem {
         shopsave["shopamount"] = newamountint
         shopsave["shopbought"] = false
 
+        let userid = Auth.auth().currentUser!.uid
         
-        ref.child("shoppinglist").childByAutoId().setValue(shopsave)
+        ref.child("shoppinglist").child(userid).childByAutoId().setValue(shopsave)
         Task {
             await loadShopping()
         }
@@ -73,6 +74,7 @@ struct ShopItem {
 
         var loadinglist: [ShopItem] = []
 
+        
         if isPreview {
             let s1 = ShopItem(fbid: "1", shopname: "Apelsin", shopamount: 1, shopbought: false)
             let s2 = ShopItem(fbid: "2", shopname: "Banan", shopamount: 2, shopbought: false)
@@ -86,10 +88,14 @@ struct ShopItem {
             return
         }
         
+        
         var ref = Database.database().reference()
         
         do {
-            let snapshot = try await ref.child("shoppinglist").getData()
+            
+            let userid = Auth.auth().currentUser!.uid
+            
+            let snapshot = try await ref.child("shoppinglist").child(userid).getData()
             
             snapshot.children.forEach { (child) in
                 let childsnapshot = child as! DataSnapshot
@@ -115,7 +121,9 @@ struct ShopItem {
     func deleteShopping(deleteitem : ShopItem) {
         var ref = Database.database().reference()
         
-        ref.child("shoppinglist").child(deleteitem.fbid).removeValue()
+        let userid = Auth.auth().currentUser!.uid
+        
+        ref.child("shoppinglist").child(userid).child(deleteitem.fbid).removeValue()
         
         Task {
             await loadShopping()

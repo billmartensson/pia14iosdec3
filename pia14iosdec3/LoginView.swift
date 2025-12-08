@@ -13,15 +13,21 @@ struct LoginView: View {
     @State var useremail = ""
     @State var userpassword = ""
 
-    
-    
+    @State var showError : String?
     
     func userlogin() {
+        
+        if useremail == "" {
+            showError = "Enter email"
+            return
+        }
+        
         Auth.auth().signIn(withEmail: useremail, password: userpassword) { authResult, error in
             if error == nil {
                 print("Login ok")
             } else {
                 print("Login fail")
+                showError = "Login error"
             }
         }
     }
@@ -32,6 +38,8 @@ struct LoginView: View {
                 print("Register ok")
             } else {
                 print("Register fail")
+                showError = error!.localizedDescription
+                print(error!.localizedDescription)
             }
         }
     }
@@ -39,14 +47,13 @@ struct LoginView: View {
     var body: some View {
         VStack {
             
-            if Auth.auth().currentUser == nil {
-                Text("INTE INLOGGAD")
+            if showError != nil {
+                VStack {
+                    Text(showError!)
+                }
+                .frame(width: 300, height: 100)
+                .background(Color.red)
             }
-            if Auth.auth().currentUser != nil {
-                Text("INLOGGAD")
-                Text(Auth.auth().currentUser!.uid)
-            }
-
             
             
             TextField("Email", text: $useremail)
@@ -57,14 +64,6 @@ struct LoginView: View {
             }
             Button("Register") {
                 userregister()
-            }
-            
-            Button("LOGOUT") {
-                do {
-                    try Auth.auth().signOut()
-                } catch {
-                    
-                }
             }
             
         }

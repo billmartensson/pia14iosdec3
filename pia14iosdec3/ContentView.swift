@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct ContentView: View {
     
@@ -40,9 +41,21 @@ struct ContentView: View {
                     
                     Spacer()
                     
+                    Button(item.shopbought ? "KÖPT" : "EJ KÖPT") {
+                        
+                    }
+
                     Button("DELETE") {
                         shopcode.deleteShopping(deleteitem: item)
                     }
+                }
+            }
+            
+            Button("Logout") {
+                do {
+                    try Auth.auth().signOut()
+                } catch {
+                    
                 }
             }
             
