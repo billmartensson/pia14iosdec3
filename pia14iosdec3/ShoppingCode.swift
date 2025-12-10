@@ -21,6 +21,8 @@ struct ShopItem {
     
     var shoppinglist: [ShopItem] = []
     
+    let ref = Database.database().reference()
+    
     var isPreview: Bool {
         return ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
@@ -51,10 +53,8 @@ struct ShopItem {
     }
     
     
-    func addToShopping(edititem : ShopItem?, newname : String, newamount : String) {
-        guard let newamountint = Int(newamount) else { return }
-        
-        var ref = Database.database().reference()
+    func addToShopping(edititem : ShopItem?, newname : String, newamount : String) async -> Bool {
+        guard let newamountint = Int(newamount) else { return false }
         
         var shopsave = [String : Any]()
         
@@ -67,17 +67,27 @@ struct ShopItem {
         let userid = Auth.auth().currentUser!.uid
         
         if edititem == nil {
-            ref.child("shoppinglist").child(userid).childByAutoId().setValue(shopsave)
+            do {
+                try await ref.child("shoppinglist").child(userid).childByAutoId().setValue(shopsave)
+            } catch {
+                // FEL VID SPARA
+                return false
+            }
         } else {
-            ref.child("shoppinglist").child(userid).child(edititem!.fbid).updateChildValues(shopsave)
+            do {
+                try await ref.child("shoppinglist").child(userid).child(edititem!.fbid).updateChildValues(shopsave)
+            } catch {
+                // FEL VID UPPDATERA
+                return false
+            }
         }
         
-        Task {
-            await loadShopping()
-        }
+        await loadShopping()
+        
+        return true
     }
     
-    func loadShopping() async {
+    func loadShopping() async -> Bool {
 
         var loadinglist: [ShopItem] = []
 
@@ -92,11 +102,8 @@ struct ShopItem {
             loadinglist.append(s3)
             
             shoppinglist = loadinglist
-            return
+            return true
         }
-        
-        
-        var ref = Database.database().reference()
         
         do {
             
@@ -122,12 +129,12 @@ struct ShopItem {
             shoppinglist = loadinglist
         } catch {
             print("ERROR FEL!!")
+            return false
         }
+        return true
     }
     
     func deleteShopping(deleteitem : ShopItem) {
-        var ref = Database.database().reference()
-        
         let userid = Auth.auth().currentUser!.uid
         
         ref.child("shoppinglist").child(userid).child(deleteitem.fbid).removeValue()
@@ -138,8 +145,6 @@ struct ShopItem {
     }
     
     func switchbought(item : ShopItem) {
-        var ref = Database.database().reference()
-        
         let userid = Auth.auth().currentUser!.uid
         
         let newbought = !item.shopbought

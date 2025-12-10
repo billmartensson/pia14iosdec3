@@ -17,11 +17,39 @@ struct ContentView: View {
 
     @State var editshop : ShopItem?
     
+    @State var loaderror = false
+    
     func doedit(item : ShopItem) {
         addname = item.shopname
         addamount = "\(item.shopamount)"
         
         editshop = item
+    }
+    
+    func saveshop() {
+        Task {
+            let saveresult = await shopcode.addToShopping(edititem: editshop, newname: addname, newamount: addamount)
+            
+            if saveresult == true {
+                editshop = nil
+                addname = ""
+                addamount = ""
+            } else {
+                print("SAVE FAIL!!!")
+            }
+            
+        }
+    }
+    
+    func loadshop() {
+        Task {
+            let loadresult = await shopcode.loadShopping()
+            if loadresult == false {
+                loaderror = true
+            } else {
+                loaderror = false
+            }
+        }
     }
     
     var body: some View {
@@ -32,12 +60,19 @@ struct ContentView: View {
                 TextField("Amount", text: $addamount)
                 
                 Button(editshop == nil ? "ADD" : "SAVE") {
-                    shopcode.addToShopping(edititem: editshop, newname: addname, newamount: addamount)
-                    
-                    editshop = nil
-                    addname = ""
-                    addamount = ""
+                    saveshop()
                 }
+            }
+            
+            if loaderror {
+                VStack {
+                    Text("LOAD FAIL")
+                    Button("Retry") {
+                        loadshop()
+                    }
+                }
+                .frame(width: 300, height: 100)
+                .background(Color.red)
             }
             
             List(shopcode.shoppinglist, id: \.fbid) { item in
@@ -50,9 +85,17 @@ struct ContentView: View {
                     Spacer()
                     
                     Button(item.shopbought ? "KÖPT" : "EJ KÖPT") {
-                        shopcode.switchbought(item: item)
+                        if item.fbid == editshop?.fbid {
+                            editshop = nil
+                            addname = ""
+                            addamount = ""
+                        } else {
+                            shopcode.switchbought(item: item)
+                        }
+                        
                     }
                 }
+                .background(item.fbid == editshop?.fbid ? Color.yellow : Color.clear)
                 .swipeActions(edge: .trailing) {
                     Button("Edit") {
                         doedit(item: item)
@@ -79,7 +122,7 @@ struct ContentView: View {
         }
         .padding()
         .task {
-            await shopcode.loadShopping()
+            loadshop()
         }
     }
 }
